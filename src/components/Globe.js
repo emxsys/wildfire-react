@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import WorldWind from '@nasaworldwind/worldwind';
 import PropTypes from 'prop-types';
+
 import './Globe.css';
 
 export default class Globe extends Component {
@@ -10,6 +11,10 @@ export default class Globe extends Component {
         this.wwd = null;
         this.nextLayerId = 1;
     }
+
+    static propTypes = {
+        onUpdate: PropTypes.func
+    }   
 
     redraw() {
         this.wwd.redraw();
@@ -96,19 +101,14 @@ export default class Globe extends Component {
     }
 
     publishUpdate(category) {
-        // Lift-up the layer category state to the parent via a props function
-        const timestamp = new Date();
-        switch (category) {
-            case 'base':
-                this.props.onUpdate({baseLayers: {layers: this.getLayers('base'), lastUpdated: timestamp}});
-                break;
-            case 'overlay':
-                this.props.onUpdate({overlayLayers: {layers: this.getLayers('overlay'), lastUpdated: timestamp}});
-                break;
-            case 'setting':
-                this.props.onUpdate({settingLayers: {layers: this.getLayers('setting'), lastUpdated: timestamp}});
-                break;
-            default:
+        if (this.props.onUpdate) {
+            // Lift-up the layer category state to the parent via a props function
+            let key = category + "Layers";
+            let state = {layers: this.getLayers(category), lastUpdated: new Date()};
+            let data = {};
+            data[key] = state;
+            // Update the parent's statu via the props function callback
+            this.props.onUpdate(data);
         }
     }
 

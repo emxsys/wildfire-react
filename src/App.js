@@ -14,16 +14,26 @@ export default class App extends Component {
             overlayLayers: {layers: [], lastUpdated: new Date()},
             settingLayers: {layers: [], lastUpdated: new Date()}
         };
-        this.globe = React.createRef();
+        // Holds a reference to the Globe component; 
+        // Use this.primaryGlobe.current to access it
+        this.primaryGlobe = React.createRef();
     }
     /**
-     * 
+     * A property function used to lift state up from the Globe and into the App.
+     */
+    onUpdate(data) {
+        this.setState(data);
+    }
+    /**
+     * Renders the globe and the panels that render the globe's contents.
+     * The Globe element/component sets the primaryGlobe reference used
+     * by the panels.
      */
     render() {
         return (
             <div className="App">
                 <div className="worldwindow">
-                    <Globe ref={this.globe} onUpdate={this.onUpdate.bind(this)} />
+                    <Globe ref={this.primaryGlobe} onUpdate={this.onUpdate.bind(this)} />
                 </div>
                 <div className="worldwindow-overlay noninteractive w-100">
                     <div className="card-columns noninteractive w-100">
@@ -31,24 +41,21 @@ export default class App extends Component {
                             <Layers
                                 baseLayers={this.state.baseLayers} 
                                 overlayLayers={this.state.overlayLayers} 
-                                globe={this.globe.current} />
+                                globe={this.primaryGlobe.current} />
                         </div>
-                        
+            
                         <div id="markers" className="collapse interactive">
                             <Markers/>
                         </div>
                         <div id="settings" className="collapse interactive">
                             <Settings
                                 settingLayers={this.state.settingLayers} 
-                                globe={this.globe.current} />
+                                globe={this.primaryGlobe.current} />
                         </div>
                     </div>
                 </div>
             </div>
             );
-    }
-    onUpdate(data) {
-        this.setState(data);
     }
 }
 

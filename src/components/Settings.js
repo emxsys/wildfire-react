@@ -8,7 +8,7 @@ export default class Settings extends Component {
         
     static propTypes = {
         settingLayers: PropTypes.object.isRequired,
-        globe: PropTypes.instanceOf(Globe).isRequired
+        globe: PropTypes.instanceOf(Globe)
     } 
     
     render() {
