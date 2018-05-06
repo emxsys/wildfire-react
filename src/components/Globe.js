@@ -2,23 +2,23 @@ import React, {Component} from 'react';
 import WorldWind from '@nasaworldwind/worldwind';
 import PropTypes from 'prop-types';
 
+import Earth from '../api/globe/Earth'
+import EnhancedAtmosphereLayer from '../api/globe/EnhancedAtmosphereLayer'
+import EoxOpenStreetMapLayer from '../api/globe/EoxOpenStreetMapLayer'
+import EoxSentinal2CloudlessLayer from '../api/globe/EoxSentinal2CloudlessLayer'
+import EoxSentinal2WithLabelsLayer from '../api/globe/EoxSentinal2WithLabelsLayer'
 import './Globe.css';
 
 export default class Globe extends Component {
 
     constructor(props) {
         super(props);
-        this.wwd = null;
-        this.nextLayerId = 1;
+        this.globe = null;
     }
 
     static propTypes = {
         onUpdate: PropTypes.func
     }   
-
-    redraw() {
-        this.wwd.redraw();
-    }
 
     initializeLayers() {
         // Define the layers to be added to the globe.
@@ -33,68 +33,44 @@ export default class Globe extends Component {
                 options: {category: "base", enabled: false}},
             {layer: new WorldWind.BingAerialWithLabelsLayer(),
                 options: {category: "base", enabled: false}},
+            {layer: new EoxSentinal2CloudlessLayer(),
+                options: {category: "base", enabled: false}},
+            {layer: new EoxSentinal2WithLabelsLayer(),
+                options: {category: "base", enabled: false}},
             {layer: new WorldWind.BingRoadsLayer(),
                 options: {category: "overlay", enabled: false, opacity: 0.8}},
-            {layer: new WorldWind.ShowTessellationLayer(),
-                options: {category: "setting", enabled: false}},
+            {layer: new EoxOpenStreetMapLayer(),
+                options: {category: "overlay", enabled: false, opacity: 0.8}},
             {layer: new WorldWind.CompassLayer(),
                 options: {category: "setting", enabled: false}},
-            {layer: new WorldWind.CoordinatesDisplayLayer(this.wwd),
+            {layer: new WorldWind.CoordinatesDisplayLayer(this.globe.wwd),
                 options: {category: "setting", enabled: true}},
-            {layer: new WorldWind.ViewControlsLayer(this.wwd),
+            {layer: new WorldWind.ViewControlsLayer(this.globe.wwd),
                 options: {category: "setting", enabled: true}},
             {layer: new WorldWind.StarFieldLayer(),
                 options: {category: "setting", enabled: false}},
-            {layer: new WorldWind.AtmosphereLayer(),
-                options: {category: "setting", enabled: false}}
+            {layer: new EnhancedAtmosphereLayer(),
+                options: {category: "setting", enabled: false}},
+            {layer: new WorldWind.ShowTessellationLayer(),
+                options: {category: "debug", enabled: false}}
         ];
 
         // Add the layers to the globe
         layerConfig.forEach(config => this.addLayer(config.layer, config.options));
     }
 
-    addLayer(layer, options) {
-        // Copy all properties defined on the options object to the layer
-        if (options) {
-            for (let prop in options) {
-                if (!options.hasOwnProperty(prop)) {
-                    continue; // skip inherited props
-                }
-                layer[prop] = options[prop];
-            }
-        }
-        // Assign a category property for layer management 
-        if (typeof layer.category === 'undefined') {
-            layer.category = 'overlay'; // the default category
-        }
-
-        // Assign a unique layer ID to ease layer management 
-        layer.uniqueId = this.nextLayerId++;
-        // Add the layer to the globe
-        this.wwd.addLayer(layer);
-        // Publish the changes
+    toggleLayer(layer) {
+        this.globe.toggleLayer(layer);
         this.publishUpdate(layer.category);
     }
-
-    toggleLayer(layer) {
-        // Rule: only one "base" layer can be enabled at a time
-        if (layer.category === 'base') {
-            this.wwd.layers.forEach(function (item) {
-                if (item.category === 'base' && item !== layer) {
-                    item.enabled = false;
-                }
-            })
-        }
-        // Toggle the selected layer's visibility
-        layer.enabled = !layer.enabled;
-        // Trigger a redraw so the globe shows the new layer state ASAP
-        this.wwd.redraw();
+    addLayer(layer, config) {
+        this.globe.addLayer(layer, config);
         this.publishUpdate(layer.category);
     }
 
     getLayers(category) {
-        if (this.wwd) {
-            return this.wwd.layers.filter(layer => layer.category === category);
+        if (this.globe) {
+            return this.globe.getLayers(category);
         } else {
             return [];
         }
@@ -119,17 +95,12 @@ export default class Globe extends Component {
     }
 
     componentDidMount() {
-        // Code to execute when the component is called and mounted.
-        // Usual WorldWind boilerplate (creating WorldWindow, 
-        // adding layers, etc.) applies here.
-
-        // Create a World Window for the canvas. Note passing the
-        // Canvas id through a React ref.
-        this.wwd = new WorldWind.WorldWindow(this.refs.globeCanvas.id);
+        // Create the WorldWindow
+        // Note passing the canvas id through a React ref
+        this.globe = new Earth(this.refs.globeCanvas.id);
+        
+        // Add layers to the globe
         this.initializeLayers();
-        if (this.props.onMapCreated && typeof this.props.onMapCreated === "function") {
-            this.props.onMapCreated(this.wwd);
-        }
     }
 
     render() {
