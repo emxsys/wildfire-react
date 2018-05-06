@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import { observer } from "mobx-react";
 
 import Globe from './components/Globe';
 import Layers from './components/Layers';
@@ -6,9 +7,10 @@ import Markers from './components/Markers';
 import Settings from './components/Settings';
 import './App.css';
 
-export default class App extends Component {
+
+const App = observer(class App extends Component {
     constructor(props) {
-        super(props)
+        super(props);
         this.state = {
             baseLayers: {layers: [], lastUpdated: new Date()},
             overlayLayers: {layers: [], lastUpdated: new Date()},
@@ -29,6 +31,7 @@ export default class App extends Component {
      * The Globe element/component sets the primaryGlobe reference used
      * by the panels.
      */
+
     render() {
         return (
             <div className="App">
@@ -57,5 +60,6 @@ export default class App extends Component {
             </div>
             );
     }
-}
+});
 
+export default App;
